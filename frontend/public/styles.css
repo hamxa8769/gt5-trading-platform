@@ -339,6 +339,63 @@ button.success {
     }
 }
 
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.analytics-card {
+    background: var(--bg-dark);
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.analytics-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.analytics-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.history-table {
+    overflow-x: auto;
+}
+
+.history-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-table th,
+.history-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.history-table th {
+    background: var(--bg-dark);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.history-table td {
+    font-size: 14px;
+}
+
+.history-table tr:hover {
+    background: var(--bg-dark);
+}
+
 @media (max-width: 768px) {
     .dashboard {
         grid-template-columns: 1fr;
@@ -346,5 +403,9 @@ button.success {
     
     .market-data {
         grid-column: span 1;
+    }
+    
+    .analytics-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }

@@ -8,22 +8,28 @@ export default class Dashboard {
         this.marketData = [];
         this.positions = [];
         this.orders = [];
+        this.analytics = null;
+        this.tradingHistory = [];
         this.activeTab = 'positions';
     }
 
     async loadData() {
         try {
-            const [accountData, instrumentsData, positionsData, ordersData] = await Promise.all([
+            const [accountData, instrumentsData, positionsData, ordersData, analyticsData, historyData] = await Promise.all([
                 api.getAccount(),
                 api.getInstruments(),
                 api.getPositions(),
-                api.getOrders()
+                api.getOrders(),
+                api.getAnalytics(),
+                api.getTradingHistory(50)
             ]);
 
             this.account = accountData.account;
             this.instruments = instrumentsData.instruments;
             this.positions = positionsData.positions;
             this.orders = ordersData.orders;
+            this.analytics = analyticsData.analytics;
+            this.tradingHistory = historyData.history;
 
             // Connect to WebSocket for real-time market data
             api.connectWebSocket((data) => {
@@ -88,6 +94,12 @@ export default class Dashboard {
                         </div>
                         <div class="tab ${this.activeTab === 'orders' ? 'active' : ''}" data-tab="orders">
                             Orders
+                        </div>
+                        <div class="tab ${this.activeTab === 'analytics' ? 'active' : ''}" data-tab="analytics">
+                            Analytics
+                        </div>
+                        <div class="tab ${this.activeTab === 'history' ? 'active' : ''}" data-tab="history">
+                            History
                         </div>
                     </div>
                     <div id="tradingContent"></div>
@@ -280,6 +292,104 @@ export default class Dashboard {
                         alert('Failed to cancel order: ' + error.message);
                     }
                 };
+            }
+        } else if (this.activeTab === 'analytics') {
+            if (!this.analytics || this.analytics.total_trades === 0) {
+                content.innerHTML = '<div class="empty-state">No trading data available yet. Start trading to see analytics!</div>';
+            } else {
+                content.innerHTML = `
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <div class="analytics-label">Total Trades</div>
+                            <div class="analytics-value">${this.analytics.total_trades}</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Win Rate</div>
+                            <div class="analytics-value" style="color: ${this.analytics.win_rate >= 50 ? 'var(--success-color)' : 'var(--danger-color)'}">
+                                ${this.analytics.win_rate.toFixed(1)}%
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Net Profit</div>
+                            <div class="analytics-value" style="color: ${this.analytics.net_profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}">
+                                ${this.analytics.net_profit.toFixed(2)}
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Profit Factor</div>
+                            <div class="analytics-value">${this.analytics.profit_factor.toFixed(2)}</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Winning Trades</div>
+                            <div class="analytics-value" style="color: var(--success-color)">${this.analytics.winning_trades}</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Losing Trades</div>
+                            <div class="analytics-value" style="color: var(--danger-color)">${this.analytics.losing_trades}</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Average Win</div>
+                            <div class="analytics-value">${this.analytics.average_win.toFixed(2)}</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Average Loss</div>
+                            <div class="analytics-value">${Math.abs(this.analytics.average_loss).toFixed(2)}</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Largest Win</div>
+                            <div class="analytics-value" style="color: var(--success-color)">${this.analytics.largest_win.toFixed(2)}</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Largest Loss</div>
+                            <div class="analytics-value" style="color: var(--danger-color)">${Math.abs(this.analytics.largest_loss).toFixed(2)}</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Sharpe Ratio</div>
+                            <div class="analytics-value">${this.analytics.sharpe_ratio.toFixed(2)}</div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-label">Total Profit</div>
+                            <div class="analytics-value" style="color: var(--success-color)">${this.analytics.total_profit.toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        } else if (this.activeTab === 'history') {
+            if (this.tradingHistory.length === 0) {
+                content.innerHTML = '<div class="empty-state">No trading history</div>';
+            } else {
+                content.innerHTML = `
+                    <div class="history-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Symbol</th>
+                                    <th>Side</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Value</th>
+                                    <th>Fee</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${this.tradingHistory.map(trade => `
+                                    <tr>
+                                        <td>${new Date(trade.created_at).toLocaleString()}</td>
+                                        <td>${trade.symbol}</td>
+                                        <td style="color: ${trade.side === 'buy' ? 'var(--success-color)' : 'var(--danger-color)'}">
+                                            ${trade.side.toUpperCase()}
+                                        </td>
+                                        <td>${parseFloat(trade.quantity).toFixed(2)}</td>
+                                        <td>${parseFloat(trade.price).toFixed(5)}</td>
+                                        <td>${trade.total_value}</td>
+                                        <td>${parseFloat(trade.fee).toFixed(2)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
             }
         }
     }

@@ -4,6 +4,7 @@ import * as orderService from '../../services/trading/orderService';
 import * as positionService from '../../services/trading/positionService';
 import * as instrumentService from '../../services/trading/instrumentService';
 import * as marketDataService from '../../services/trading/marketDataService';
+import * as analyticsService from '../../services/trading/analyticsService';
 import { CreateOrderData, OrderType, OrderSide } from '../../types/trading';
 import { ValidationError } from '../../utils/errors';
 
@@ -172,6 +173,40 @@ router.get('/account', async (req: Request, res: Response, next: NextFunction) =
         positions_count: positions.length
       }
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get trade analytics
+router.get('/analytics', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const analytics = await analyticsService.getTradeAnalytics(userId);
+    res.json({ analytics });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get performance metrics
+router.get('/performance', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const metrics = await analyticsService.getPerformanceMetrics(userId);
+    res.json(metrics);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get trading history
+router.get('/history', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const limit = parseInt(req.query.limit as string) || 100;
+    const history = await analyticsService.getTradingHistory(userId, limit);
+    res.json({ history });
   } catch (error) {
     next(error);
   }

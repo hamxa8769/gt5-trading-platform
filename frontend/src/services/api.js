@@ -152,6 +152,24 @@ class APIService {
         return response.json();
     }
 
+    async getAnalytics() {
+        const response = await this.request('/trading/analytics');
+        if (!response.ok) throw new Error('Failed to fetch analytics');
+        return response.json();
+    }
+
+    async getPerformance() {
+        const response = await this.request('/trading/performance');
+        if (!response.ok) throw new Error('Failed to fetch performance');
+        return response.json();
+    }
+
+    async getTradingHistory(limit = 100) {
+        const response = await this.request(`/trading/history?limit=${limit}`);
+        if (!response.ok) throw new Error('Failed to fetch history');
+        return response.json();
+    }
+
     connectWebSocket(onMarketData) {
         if (this.ws) {
             this.ws.close();
