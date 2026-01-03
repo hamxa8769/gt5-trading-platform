@@ -1,0 +1,12 @@
+{
+  "name": "gt5-trading-platform-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for GT5 Trading Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["trading", "frontend"],
+  "author": "GT5 Platform Team",
+  "license": "MIT"
+}
