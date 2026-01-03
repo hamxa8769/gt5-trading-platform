@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { createServer } from 'http';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -6,6 +7,8 @@ import rateLimit from 'express-rate-limit';
 import { testConnection } from './config/database';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import authRoutes from './routes/v1/auth';
+import tradingRoutes from './routes/v1/trading';
+import { setupWebSocketServer } from './services/websocket/websocketService';
 import logger from './utils/logger';
 import { HealthResponse } from './types/api';
 
@@ -68,6 +71,7 @@ app.get('/health', async (_req: Request, res: Response) => {
 });
 
 app.use(`/api/${API_VERSION}/auth`, authRoutes);
+app.use(`/api/${API_VERSION}/trading`, tradingRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
@@ -81,11 +85,17 @@ const startServer = async () => {
       process.exit(1);
     }
 
-    app.listen(PORT, () => {
+    const server = createServer(app);
+    
+    // Setup WebSocket server
+    setupWebSocketServer(server);
+
+    server.listen(PORT, () => {
       logger.info(`Server started successfully`, {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
-        apiVersion: API_VERSION
+        apiVersion: API_VERSION,
+        websocket: 'enabled'
       });
     });
   } catch (error) {
